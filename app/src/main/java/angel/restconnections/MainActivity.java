@@ -16,9 +16,10 @@ import angel.restconnections.domain.Post;
 import angel.restconnections.net.RXPostConnector;
 import angel.restconnections.net.VolleyDispatcher;
 import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.annotations.NonNull;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
-import io.reactivex.functions.Consumer;
+import io.reactivex.observers.DisposableSingleObserver;
 import io.reactivex.schedulers.Schedulers;
 
 public class MainActivity extends AppCompatActivity {
@@ -46,7 +47,7 @@ public class MainActivity extends AppCompatActivity {
         getPostsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                subscribeSingle();
+                downloadPosts();
             }
         });
 
@@ -56,22 +57,34 @@ public class MainActivity extends AppCompatActivity {
         postsList.setAdapter(adapter);
     }
 
-    private void subscribeSingle() {
-        Disposable subscription = RXPostConnector.getInstance().getPostsSingle(MainActivity.this)
+    private void downloadPosts() {
+        Disposable subscription = RXPostConnector.getInstance().getPosts()
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribeOn(Schedulers.io())
-                .subscribe(new Consumer<List<Post>>() {
-                    @Override
-                    public void accept(List<Post> posts) throws Exception {
-                        postTitles.clear();
-                        for (Post current : posts) {
-                            postTitles.add(current.title);
-                        }
-                        adapter.notifyDataSetChanged();
-                    }
-                });
+                .subscribeWith(getObserver());
+
         disposable.add(subscription);
     }
+
+    private DisposableSingleObserver<List<Post>> getObserver(){
+        return new DisposableSingleObserver<List<Post>>() {
+            @Override
+            public void onSuccess(@NonNull List<Post> posts) {
+                postTitles.clear();
+                for (Post current : posts) {
+                    postTitles.add(current.title);
+                }
+                adapter.notifyDataSetChanged();
+            }
+
+            @Override
+            public void onError(@NonNull Throwable e) {
+
+            }
+        };
+    }
+
+
 
 
     @Override

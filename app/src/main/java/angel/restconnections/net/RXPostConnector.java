@@ -37,7 +37,16 @@ public class RXPostConnector {
     }
 
 
-    public Single<List<Post>> getPostsSingle(final MainActivity context) {
+    private Post getPost(JSONObject current) throws JSONException {
+        Post result = new Post();
+        result.id = current.getInt("id");
+        result.userId = current.getInt("userId");
+        result.body = current.getString("body");
+        result.title = current.getString("title");
+        return result;
+    }
+
+    public Single<List<Post>> getPosts() {
         return Single.create(new SingleOnSubscribe<List<Post>>() {
             @Override
             public void subscribe(@NonNull final SingleEmitter<List<Post>> e) throws Exception {
@@ -50,13 +59,7 @@ public class RXPostConnector {
 
                                     try {
                                         for (int i = 0; i < response.length(); i++) {
-                                            JSONObject current = response.getJSONObject(i);
-                                            Post post = new Post();
-                                            post.id = current.getInt("id");
-                                            post.userId = current.getInt("userId");
-                                            post.body = current.getString("body");
-                                            post.title = current.getString("title");
-                                            result.add(post);
+                                            result.add(getPost(response.getJSONObject(i)));
                                         }
                                     } catch (JSONException ex) {
                                         e.onError(ex);
