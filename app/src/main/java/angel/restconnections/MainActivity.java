@@ -63,6 +63,7 @@ public class MainActivity extends AppCompatActivity {
                 .subscribeOn(Schedulers.io())
                 .subscribeWith(getObserver());
 
+        // add the subscription to the list to avoid a possible leak of references
         disposable.add(subscription);
     }
 
@@ -84,12 +85,9 @@ public class MainActivity extends AppCompatActivity {
         };
     }
 
-
-
-
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
+    protected void onStop() {
+        super.onStop();
         if (disposable != null && !disposable.isDisposed()) {
             disposable.dispose();
         }
